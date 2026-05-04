@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Newsroom — 4-Agent Editorial Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- GRAIN OVERLAY -->
+<div class="grain"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <span class="logo-icon">📰</span>
+      <span class="logo-text">AI <span class="red">Newsroom</span></span>
+    </div>
+    <div class="nav-pipeline-label">Research · Writing · Fact-Check · Editorial</div>
+    <div class="nav-actions">
+    </div>
+  </div>
+</nav>
+
+<!-- HERO SECTION -->
+<section class="hero" id="heroSection">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">AI-POWERED EDITORIAL PIPELINE</div>
+    <h1 class="hero-title">What's the <span class="red italic">story?</span></h1>
+    <p class="hero-subtitle">Enter a news idea. Four AI agents research, write, fact-check, and publish it — in under 60 seconds.</p>
+
+    <div class="input-area">
+      <textarea id="ideaInput" placeholder="e.g. India AI Policy 2025 and its impact on startups…" rows="3"></textarea>
+      <button class="btn-run" id="runBtn" onclick="runPipeline()">
+        <span class="btn-icon">🚀</span>
+        <span class="btn-text">Run Newsroom Pipeline</span>
+      </button>
+    </div>
+
+    <div class="demos-row">
+      <span class="demos-label">TRY A DEMO:</span>
+      <div class="demo-pills">
+        <button class="demo-pill" onclick="setDemo(this)">India AI Policy 2025</button>
+        <button class="demo-pill" onclick="setDemo(this)">OpenAI GPT-5 &amp; Jobs</button>
+        <button class="demo-pill" onclick="setDemo(this)">Global EV Market 2025</button>
+        <button class="demo-pill" onclick="setDemo(this)">India Startup Funding</button>
+        <button class="demo-pill" onclick="setDemo(this)">Apple Vision Pro</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PIPELINE SECTION -->
+<section class="pipeline-section" id="pipelineSection" style="display:none">
+  <div class="pipeline-inner">
+
+    <!-- Token tracker -->
+    <div class="token-tracker" id="tokenTracker">
+      <div class="token-left">
+        <span class="token-label">TOKENS THIS RUN</span>
+        <span class="token-count" id="tokenCount">0</span>
+        <span class="token-limit">/ 11,000</span>
+      </div>
+      <div class="token-bar-wrap">
+        <div class="token-bar-fill" id="tokenBarFill"></div>
+      </div>
+      <div class="token-pct" id="tokenPct">0%</div>
+    </div>
+
+    <!-- Agent cards -->
+    <div class="agents-grid">
+
+      <div class="agent-card" id="card-news">
+        <div class="agent-card-header">
+          <div class="agent-info">
+            <span class="agent-icon">🌐</span>
+            <div>
+              <div class="agent-name">News Fetch</div>
+              <div class="agent-cap">Live headlines via NewsAPI</div>
+            </div>
+          </div>
+          <div class="agent-badge idle" id="badge-news">IDLE</div>
+        </div>
+        <div class="agent-status-text" id="status-news">Waiting…</div>
+      </div>
+
+      <div class="agent-card" id="card-research">
+        <div class="agent-card-header">
+          <div class="agent-info">
+            <span class="agent-icon">🔍</span>
+            <div>
+              <div class="agent-name">Research Agent</div>
+              <div class="agent-cap">Output cap: 700 tokens</div>
+            </div>
+          </div>
+          <div class="agent-badge idle" id="badge-research">IDLE</div>
+        </div>
+        <div class="agent-status-text" id="status-research">Waiting…</div>
+        <div class="agent-output-wrap" id="output-research" style="display:none">
+          <button class="toggle-output" onclick="toggleOutput('research')">▸ View raw output</button>
+          <pre class="agent-output" id="raw-research"></pre>
+        </div>
+      </div>
+
+      <div class="agent-card" id="card-writing">
+        <div class="agent-card-header">
+          <div class="agent-info">
+            <span class="agent-icon">✍️</span>
+            <div>
+              <div class="agent-name">Writing Agent</div>
+              <div class="agent-cap">Output cap: 750 tokens</div>
+            </div>
+          </div>
+          <div class="agent-badge idle" id="badge-writing">IDLE</div>
+        </div>
+        <div class="agent-status-text" id="status-writing">Waiting…</div>
+        <div class="agent-output-wrap" id="output-writing" style="display:none">
+          <button class="toggle-output" onclick="toggleOutput('writing')">▸ View raw output</button>
+          <pre class="agent-output" id="raw-writing"></pre>
+        </div>
+      </div>
+
+      <div class="agent-card" id="card-factcheck">
+        <div class="agent-card-header">
+          <div class="agent-info">
+            <span class="agent-icon">🔎</span>
+            <div>
+              <div class="agent-name">Fact-Check Agent</div>
+              <div class="agent-cap">Output cap: 550 tokens</div>
+            </div>
+          </div>
+          <div class="agent-badge idle" id="badge-factcheck">IDLE</div>
+        </div>
+        <div class="agent-status-text" id="status-factcheck">Waiting…</div>
+        <div class="confidence-meter" id="confidence-meter" style="display:none">
+          <div class="conf-label">Confidence Score</div>
+          <div class="conf-bar-wrap"><div class="conf-bar-fill" id="confBarFill"></div></div>
+          <div class="conf-value" id="confValue">—</div>
+        </div>
+        <div class="agent-output-wrap" id="output-factcheck" style="display:none">
+          <button class="toggle-output" onclick="toggleOutput('factcheck')">▸ View raw output</button>
+          <pre class="agent-output" id="raw-factcheck"></pre>
+        </div>
+      </div>
+
+      <div class="agent-card" id="card-editorial">
+        <div class="agent-card-header">
+          <div class="agent-info">
+            <span class="agent-icon">📝</span>
+            <div>
+              <div class="agent-name">Editorial Agent</div>
+              <div class="agent-cap">Output cap: 650 tokens</div>
+            </div>
+          </div>
+          <div class="agent-badge idle" id="badge-editorial">IDLE</div>
+        </div>
+        <div class="agent-status-text" id="status-editorial">Waiting…</div>
+        <div class="agent-output-wrap" id="output-editorial" style="display:none">
+          <button class="toggle-output" onclick="toggleOutput('editorial')">▸ View raw output</button>
+          <pre class="agent-output" id="raw-editorial"></pre>
+        </div>
+      </div>
+
+      <div class="agent-card" id="card-image">
+        <div class="agent-card-header">
+          <div class="agent-info">
+            <span class="agent-icon">🖼️</span>
+            <div>
+              <div class="agent-name">AI Keyword + Image</div>
+              <div class="agent-cap">AI keyword agent · ~20 tokens</div>
+            </div>
+          </div>
+          <div class="agent-badge idle" id="badge-image">IDLE</div>
+        </div>
+        <div class="agent-status-text" id="status-image">Waiting…</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PUBLICATION SECTION -->
+<section class="publication-section" id="publicationSection" style="display:none">
+  <div class="publication-inner">
+
+    <div class="pub-grid">
+
+      <!-- LEFT: Article -->
+      <article class="pub-article">
+        <div class="pub-tags" id="pubTags"></div>
+        <h1 class="pub-headline" id="pubHeadline"></h1>
+        <div class="pub-meta" id="pubMeta"></div>
+        <hr class="pub-divider">
+        <div class="keyword-badge-wrap">
+          <span class="keyword-badge" id="keywordBadge"></span>
+        </div>
+        <div class="pub-image-wrap" id="pubImageWrap"></div>
+        <div class="pub-body" id="pubBody"></div>
+        <div class="pub-actions">
+          <button class="btn-download" id="downloadBtn" onclick="downloadArticle()">⬇ Download Article</button>
+          <button class="btn-reset" onclick="resetPage()">← New Story</button>
+        </div>
+      </article>
+
+      <!-- RIGHT: Summary -->
+      <aside class="pub-summary">
+        <div class="summary-card">
+          <div class="summary-title">RUN SUMMARY</div>
+
+          <div class="summary-topic" id="summaryTopic"></div>
+
+          <div class="summary-sep"></div>
+
+          <div class="summary-tokens-label">TOKENS USED</div>
+          <div class="summary-tokens-num" id="summaryTokens">—</div>
+          <div class="summary-tokens-sub">of 11,000 limit</div>
+          <div class="summary-bar-wrap">
+            <div class="summary-bar-fill" id="summaryBarFill"></div>
+          </div>
+
+          <div class="summary-sep"></div>
+
+          <div class="summary-section-title">AGENT TOKEN CAPS</div>
+          <table class="summary-table">
+            <tr><td>🔍 Research</td><td>700</td></tr>
+            <tr><td>✍️ Writing</td><td>750</td></tr>
+            <tr><td>🔎 Fact-Check</td><td>550</td></tr>
+            <tr><td>📝 Editorial</td><td>650</td></tr>
+            <tr><td>🖼️ Keyword</td><td>0 (logic)</td></tr>
+            <tr class="sum-total"><td>Max output</td><td>2,650</td></tr>
+          </table>
+
+          <div class="summary-sep"></div>
+
+          <div class="summary-section-title">CONFIDENCE SCORE</div>
+          <div class="summary-conf" id="summaryConf">—</div>
+          <div class="summary-conf-bar-wrap">
+            <div class="summary-conf-fill" id="summaryConfFill"></div>
+          </div>
+
+          <div class="summary-sep"></div>
+
+          <div class="summary-section-title">UNSPLASH KEYWORD</div>
+          <div class="summary-keyword" id="summaryKeyword">—</div>
+          <div class="summary-keyword-note">Chosen by AI keyword agent · ~20 tokens</div>
+
+          <div class="summary-thumb-wrap" id="summaryThumb"></div>
+        </div>
+      </aside>
+
+    </div>
+
+    <div class="success-banner" id="successBanner" style="display:none">
+      🎉 Pipeline complete! <span id="bannerTokens"></span> tokens used — ✅ within 11k budget.
+    </div>
+
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>📰 AI Newsroom</span>
+    <span>·</span>
+    <span>Powered by Groq · llama-3.3-70b-versatile</span>
+    <span>·</span>
+    <span>Photos by Unsplash</span>
+  </div>
+</footer>
+
+<script src="/static/js/main.js"></script>
+</body>
+</html>
