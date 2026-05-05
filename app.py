@@ -1,5 +1,6 @@
 import re
 import requests
+import os
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 import json
 
@@ -183,5 +184,7 @@ def run_pipeline():
     return Response(stream_with_context(generate()), mimetype="text/event-stream",
                     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
