@@ -13,9 +13,9 @@ UNSPLASH_URL = "https://api.unsplash.com/search/photos"
 TOKEN_LIMIT  = 11_000
 
 # ── API Keys (hardcoded — no user input required) ─────────────────────────────
-GROQ_API_KEY     = "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"
-NEWS_API_KEY     = "cdced59a457d4b4ba950a544509c3d8a"
-UNSPLASH_API_KEY = "Ghuft0Zg18OyNbKYG93Sc1Xeo0JRRDFNV0M4qcNGW_c"
+GROQ_API_KEY     = ""
+NEWS_API_KEY     = ""
+UNSPLASH_API_KEY = ""
 # ─────────────────────────────────────────────────────────────────────────────
 
 
